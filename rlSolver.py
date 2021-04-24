@@ -1,4 +1,5 @@
 
+import os.path
 import gym
 import torch as th
 import torch.nn as nn
@@ -10,6 +11,9 @@ from stable_baselines3.common.evaluation import evaluate_policy
 
 
 from gym.wrappers import TimeLimit
+
+agentPath = "_data/myModel.zip"
+
 
 env = ConstructionSite()
 env = TimeLimit(env, max_episode_steps=2000)
@@ -51,8 +55,15 @@ policy_kwargs = dict(
     features_extractor_kwargs=dict(features_dim=128),
 )
 
-# model = PPO("CnnPolicy", env, policy_kwargs=policy_kwargs, verbose=1)
-model = PPO.load("_data/myModel")
+if os.path.isfile(agentPath) :
+    print(f"Load agent from {agentPath}")
+    model = PPO.load(agentPath)
+    model.set_env(env)
+else :
+    print(f"Instanciate new agent and save in {agentPath}")
+    model = PPO("CnnPolicy", env, policy_kwargs=policy_kwargs, verbose=1)
+    model.save(agentPath)
+
 
 for _ in range(50) :
     model.learn(100000)
@@ -61,4 +72,4 @@ for _ in range(50) :
     print(f"mean_reward:{mean_reward:.2f} +/- {std_reward:.2f}")
 
 
-    model.save("_data/myModel")
+    model.save(agentPath)
