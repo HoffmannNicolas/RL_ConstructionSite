@@ -17,6 +17,10 @@ class ConstructionSite(gym.Env) :
         self.height = gridHeight
         self.map = np.zeros((self.width, self.height))
 
+        self.initMap = np.copy(self.map)
+        self.initMap[random.randint(0, self.width-1), random.randint(0, self.height-1)] += 5
+        self.initMap[random.randint(0, self.width-1), random.randint(0, self.height-1)] -= 5
+
             # Properties of the operating machine
         self.w = random.randint(0, self.width-1)
         self.h = random.randint(0, self.height-1)
@@ -36,25 +40,26 @@ class ConstructionSite(gym.Env) :
         self.observation_space = gym.spaces.Box(
             low=-10,
             high=10,
-            shape=(self.width, self.height, 2)
+            shape=(2, self.width, self.height)
         )
 
 
     def _computeObservation(self) :
-        positionMap = np.zeros((self.width, self.height, 1))
-        positionMap[self.w, self.h, 0] = 1
-        _map = np.expand_dims(self.map, axis=2)
-        obs = np.concatenate((_map, positionMap), axis=-1)
+        positionMap = np.zeros((1, self.width, self.height))
+        if (self.isLoaded) :
+            positionMap[0, self.w, self.h] = 1
+        else :
+            positionMap[0, self.w, self.h] = -1
+        _map = np.expand_dims(self.map, axis=0)
+        obs = np.concatenate((_map, positionMap), axis=0)
         return obs
 
     def reset(self) :
         self.w = random.randint(0, self.width-1)
         self.h = random.randint(0, self.height-1)
         self.isLoaded = False
-        self.map = np.zeros((self.width, self.height))
 
-        self.map[random.randint(0, self.width-1), random.randint(0, self.height-1)] += 5
-        self.map[random.randint(0, self.width-1), random.randint(0, self.height-1)] -= 5
+        self.map = np.copy(self.initMap)
 
         return self._computeObservation()
 
@@ -95,7 +100,10 @@ class ConstructionSite(gym.Env) :
 
         obs = self._computeObservation()
         reward = -0.01
-        reward += abs(previousHeight) - abs(self.map[previousW, previousH])
+        if abs(previousHeight) > abs(self.map[previousW, previousH]) :
+            reward += 1
+        elif abs(previousHeight) < abs(self.map[previousW, previousH]) :
+            reward -= 1
         done = self._isMapFlat()
         info = {}
         return obs, reward, done, info
