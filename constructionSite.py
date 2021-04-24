@@ -163,8 +163,6 @@ class ConstructionSite(gym.Env) :
             bottomCoord = topCoord + cellHeight - 1
             imageDraw.ellipse((leftCoord+agentMargin, topCoord+agentMargin, rightCoord-agentMargin, bottomCoord-agentMargin), fill=agentColor)
 
-            del imageDraw
-
             image.save("_data/image.png")
             return image
 
