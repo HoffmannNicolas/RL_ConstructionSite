@@ -107,3 +107,16 @@ class ConstructionSite(gym.Env) :
         done = self._isMapFlat()
         info = {}
         return obs, reward, done, info
+
+
+    def render(self, mode='console'):
+        if mode == 'console':
+            print("\n=== Env ===")
+            for h in self.height :
+                print("\t", end='')
+                for w in self.width :
+                    print(f"{self.map[w, h]} ", end='')
+                print()
+            print()
+        else :
+            raise NotImplementedError()
