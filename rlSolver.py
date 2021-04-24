@@ -15,7 +15,7 @@ from gym.wrappers import TimeLimit
 agentPath = "_data/myModel.zip"
 
 
-env = ConstructionSite(gridWidth=5, gridHeight=5)
+env = ConstructionSite(gridWidth=5, gridHeight=5, seed=0)
 env = TimeLimit(env, max_episode_steps=2000)
 
 
@@ -64,16 +64,19 @@ else :
     model = PPO("CnnPolicy", env, policy_kwargs=policy_kwargs, verbose=1)
     model.save(agentPath)
 
-# Test the trained agent
+# Record gif of trained agent
+imagesGrid =[]
 obs = env.reset()
-for step in range(20):
-    action, _ = model.predict(obs, deterministic=True)
+imagesGrid.append(env.render("human"))
+for step in range(200):
+    action, _ = model.predict(obs, deterministic=False)
     obs, reward, done, info = env.step(action)
     env.render(mode='console')
-    env.render(mode='human')
+    imagesGrid.append(env.render("human"))
     if done:
         print("Goal reached!", "reward=", reward)
         break
+imagesGrid[0].save(f'_data/visu.gif', save_all=True, append_images=imagesGrid[1:], optimize=True, duration=100, loop=0)
 
 
 for _ in range(50) :
