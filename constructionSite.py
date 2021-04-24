@@ -62,9 +62,7 @@ class ConstructionSite(gym.Env) :
         self.w = random.randint(0, self.width-1)
         self.h = random.randint(0, self.height-1)
         self.isLoaded = False
-
         self.map = np.copy(self.initMap)
-
         return self._computeObservation()
 
 
@@ -132,8 +130,10 @@ class ConstructionSite(gym.Env) :
             leveledCellColor = (125, 90, 50)
             cellBorderColor = (0, 0, 0)
             agentColor = (255, 255, 0)
+            agentMargin = 5
             image = Image.new('RGB', (self.width * cellWidth, self.height * cellHeight), leveledCellColor)
             imageDraw = ImageDraw.Draw(image)
+
                 # Draw cells
             for cellCoordX in range(self.width):
                 for cellCoordY in range(self.height):
@@ -151,34 +151,17 @@ class ConstructionSite(gym.Env) :
                 # Draw cells borders
             for cellCoordX in range(self.width):
                 for cellCoordY in range(self.height):
-                    imageDraw.line(
-                        [(cellCoordX * cellWidth, cellCoordY * cellHeight), ((cellCoordX+1) * cellWidth - 1, cellCoordY * cellHeight)],
-                        fill = cellBorderColor,
-                        width = 0
-                    )
-                    imageDraw.line(
-                        [((cellCoordX+1) * cellWidth - 1, cellCoordY * cellHeight), ((cellCoordX+1) * cellWidth - 1, (cellCoordY+1) * cellHeight - 1)],
-                        fill = cellBorderColor,
-                        width = 0
-                    )
-                    imageDraw.line(
-                        [((cellCoordX+1) * cellWidth - 1, (cellCoordY+1) * cellHeight - 1), (cellCoordX * cellWidth, (cellCoordY+1) * cellHeight - 1)],
-                        fill = cellBorderColor,
-                        width = 0
-                    )
-                    imageDraw.line(
-                        [(cellCoordX * cellWidth, (cellCoordY+1) * cellHeight - 1), (cellCoordX * cellWidth, cellCoordY * cellHeight)],
-                        fill = cellBorderColor,
-                        width = 0
-                    )
+                    imageDraw.line([(cellCoordX * cellWidth, cellCoordY * cellHeight), ((cellCoordX+1) * cellWidth - 1, cellCoordY * cellHeight)], fill=cellBorderColor, width=0)
+                    imageDraw.line([((cellCoordX+1) * cellWidth - 1, cellCoordY * cellHeight), ((cellCoordX+1) * cellWidth - 1, (cellCoordY+1) * cellHeight - 1)], fill=cellBorderColor, width=0)
+                    imageDraw.line([((cellCoordX+1) * cellWidth - 1, (cellCoordY+1) * cellHeight - 1), (cellCoordX * cellWidth, (cellCoordY+1) * cellHeight - 1)], fill=cellBorderColor, width=0)
+                    imageDraw.line([(cellCoordX * cellWidth, (cellCoordY+1) * cellHeight - 1), (cellCoordX * cellWidth, cellCoordY * cellHeight)], fill=cellBorderColor, width=0)
 
                 # Draw agent
             leftCoord = self.w * cellWidth
             rightCoord = leftCoord + cellWidth - 1
             topCoord = self.h * cellHeight
             bottomCoord = topCoord + cellHeight - 1
-            margin = 5
-            imageDraw.ellipse((leftCoord+margin, topCoord+margin, rightCoord-margin, bottomCoord-margin), fill=agentColor)
+            imageDraw.ellipse((leftCoord+agentMargin, topCoord+agentMargin, rightCoord-agentMargin, bottomCoord-agentMargin), fill=agentColor)
 
             del imageDraw
 
