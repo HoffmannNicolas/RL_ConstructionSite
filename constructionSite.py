@@ -4,6 +4,8 @@ import numpy as np
 import random
 import gym
 
+import math
+from PIL import Image, ImageDraw
 
 class ConstructionSite(gym.Env) :
 
@@ -112,11 +114,74 @@ class ConstructionSite(gym.Env) :
     def render(self, mode='console'):
         if mode == 'console':
             print("\n=== Env ===")
-            for h in self.height :
+            for h in range(self.height) :
                 print("\t", end='')
-                for w in self.width :
-                    print(f"{self.map[w, h]} ", end='')
+                for w in range(self.width) :
+                    if (self.w == w) and (self.h == h) :
+                        print(f"X\t", end='')
+                    else :
+                        print(f"{int(self.map[w, h])}\t", end='')
                 print()
             print()
+
+        elif mode == "human" :
+            cellWidth = 20 # Pixels
+            cellHeight = 20 # Pixels
+            leveledCellColor = (130, 90, 50)
+            lowestLevelColor = (100, 60, 20)
+            highestLevelColor = (160, 120, 80)
+            cellBorderColor = (0, 0, 0)
+            agentColor = (255, 255, 0)
+            image = Image.new('RGB', (self.width * cellWidth, self.height * cellHeight), leveledCellColor)
+            imageDraw = ImageDraw.Draw(image)
+                # Draw cells
+            for cellCoordX in range(self.width):
+                for cellCoordY in range(self.height):
+                    cellLeftCoord = cellCoordX * cellWidth
+                    cellRightCoord = cellLeftCoord + cellWidth - 1
+                    cellTopCoord = cellCoordY * cellHeight
+                    cellBottomCoord = cellTopCoord + cellWidth - 1
+                    cellAltitude = self.map[cellCoordX, cellCoordY]
+                    if (cellAltitude < 0) : cellColor = lowestLevelColor
+                    elif (cellAltitude > 0) : cellColor = highestLevelColor
+                    else : cellColor = leveledCellColor
+                    imageDraw.rectangle([(cellLeftCoord, cellTopCoord), (cellRightCoord, cellBottomCoord)], cellColor)
+
+                # Draw cells borders
+            for cellCoordX in range(self.width):
+                for cellCoordY in range(self.height):
+                    imageDraw.line(
+                        [(cellCoordX * cellWidth, cellCoordY * cellHeight), ((cellCoordX+1) * cellWidth - 1, cellCoordY * cellHeight)],
+                        fill = cellBorderColor,
+                        width = 0
+                    )
+                    imageDraw.line(
+                        [((cellCoordX+1) * cellWidth - 1, cellCoordY * cellHeight), ((cellCoordX+1) * cellWidth - 1, (cellCoordY+1) * cellHeight - 1)],
+                        fill = cellBorderColor,
+                        width = 0
+                    )
+                    imageDraw.line(
+                        [((cellCoordX+1) * cellWidth - 1, (cellCoordY+1) * cellHeight - 1), (cellCoordX * cellWidth, (cellCoordY+1) * cellHeight - 1)],
+                        fill = cellBorderColor,
+                        width = 0
+                    )
+                    imageDraw.line(
+                        [(cellCoordX * cellWidth, (cellCoordY+1) * cellHeight - 1), (cellCoordX * cellWidth, cellCoordY * cellHeight)],
+                        fill = cellBorderColor,
+                        width = 0
+                    )
+
+                # Draw agent
+            leftCoord = self.w * cellWidth
+            rightCoord = leftCoord + cellWidth - 1
+            topCoord = self.h * cellHeight
+            bottomCoord = topCoord + cellHeight - 1
+            margin = 5
+            imageDraw.ellipse((leftCoord+margin, topCoord+margin, rightCoord-margin, bottomCoord-margin), fill=agentColor)
+
+            del imageDraw
+
+            image.save("_data/image.png")
+
         else :
             raise NotImplementedError()
