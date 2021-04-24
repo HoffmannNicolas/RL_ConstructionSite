@@ -11,12 +11,13 @@ class ConstructionSite(gym.Env) :
 
     """ Custom "Construction Site" environment that follows gym interface """
 
-    def __init__(self, gridWidth=10, gridHeight=10) :
+    def __init__(self, gridWidth=10, gridHeight=10, highestAltitudeError=10) :
         super(ConstructionSite, self).__init__()
 
             # Properties of the construction site
         self.width = gridWidth
         self.height = gridHeight
+        self.highestAltitudeError = highestAltitudeError
         self.map = np.zeros((self.width, self.height))
 
         self.initMap = np.copy(self.map)
@@ -40,8 +41,8 @@ class ConstructionSite(gym.Env) :
 
             # Observation space
         self.observation_space = gym.spaces.Box(
-            low=-10,
-            high=10,
+            low=-highestAltitudeError,
+            high=highestAltitudeError,
             shape=(2, self.width, self.height)
         )
 
@@ -127,9 +128,7 @@ class ConstructionSite(gym.Env) :
         elif mode == "human" :
             cellWidth = 20 # Pixels
             cellHeight = 20 # Pixels
-            leveledCellColor = (130, 90, 50)
-            lowestLevelColor = (100, 60, 20)
-            highestLevelColor = (160, 120, 80)
+            leveledCellColor = (125, 90, 50)
             cellBorderColor = (0, 0, 0)
             agentColor = (255, 255, 0)
             image = Image.new('RGB', (self.width * cellWidth, self.height * cellHeight), leveledCellColor)
@@ -142,8 +141,9 @@ class ConstructionSite(gym.Env) :
                     cellTopCoord = cellCoordY * cellHeight
                     cellBottomCoord = cellTopCoord + cellWidth - 1
                     cellAltitude = self.map[cellCoordX, cellCoordY]
-                    if (cellAltitude < 0) : cellColor = lowestLevelColor
-                    elif (cellAltitude > 0) : cellColor = highestLevelColor
+                    cellAltitudeError = abs(cellAltitude)
+                    if (cellAltitude < 0) : cellColor = tuple([int(val) for val in (1 - cellAltitudeError / self.highestAltitudeError) * np.array(leveledCellColor)])
+                    elif (cellAltitude > 0) : cellColor = tuple([int(val) for val in (1 + cellAltitudeError / self.highestAltitudeError) * np.array(leveledCellColor)])
                     else : cellColor = leveledCellColor
                     imageDraw.rectangle([(cellLeftCoord, cellTopCoord), (cellRightCoord, cellBottomCoord)], cellColor)
 
@@ -182,6 +182,7 @@ class ConstructionSite(gym.Env) :
             del imageDraw
 
             image.save("_data/image.png")
+            return image
 
         else :
             raise NotImplementedError()
