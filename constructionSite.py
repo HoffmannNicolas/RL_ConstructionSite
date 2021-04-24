@@ -11,8 +11,9 @@ class ConstructionSite(gym.Env) :
 
     """ Custom "Construction Site" environment that follows gym interface """
 
-    def __init__(self, gridWidth=10, gridHeight=10, highestAltitudeError=10) :
+    def __init__(self, gridWidth=10, gridHeight=10, highestAltitudeError=10, seed=random.random()) :
         super(ConstructionSite, self).__init__()
+        random.seed(seed)
 
             # Properties of the construction site
         self.width = gridWidth
