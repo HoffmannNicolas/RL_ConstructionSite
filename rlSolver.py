@@ -15,7 +15,7 @@ from gym.wrappers import TimeLimit
 agentPath = "_data/myModel.zip"
 
 
-env = ConstructionSite()
+env = ConstructionSite(gridWidth=5, gridHeight=5)
 env = TimeLimit(env, max_episode_steps=2000)
 
 
@@ -63,6 +63,17 @@ else :
     print(f"Instanciate new agent and save in {agentPath}")
     model = PPO("CnnPolicy", env, policy_kwargs=policy_kwargs, verbose=1)
     model.save(agentPath)
+
+# Test the trained agent
+obs = env.reset()
+for step in range(20):
+    action, _ = model.predict(obs, deterministic=True)
+    obs, reward, done, info = env.step(action)
+    env.render(mode='console')
+    env.render(mode='human')
+    if done:
+        print("Goal reached!", "reward=", reward)
+        break
 
 
 for _ in range(50) :
