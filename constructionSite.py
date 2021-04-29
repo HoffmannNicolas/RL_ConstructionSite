@@ -20,15 +20,12 @@ class ConstructionSite(gym.Env) :
         self.height = gridHeight
         self.highestAltitudeError = highestAltitudeError
         self.map = np.zeros((self.width, self.height))
-
-        self.initMap = np.copy(self.map)
-        self.initMap[random.randint(0, self.width-1), random.randint(0, self.height-1)] += 5
-        self.initMap[random.randint(0, self.width-1), random.randint(0, self.height-1)] -= 5
+        self.initMap = None
 
             # Properties of the operating machine
-        self.w = random.randint(0, self.width-1)
-        self.h = random.randint(0, self.height-1)
-        self.isLoaded = False
+        self.w = None
+        self.h = None
+        self.isLoaded = None
 
             # Action space
         self.GoUp = 0
@@ -48,6 +45,13 @@ class ConstructionSite(gym.Env) :
         )
 
 
+    def _defineInitMap(self) :
+        initMap = np.copy(self.map)
+        initMap[random.randint(0, self.width-1), random.randint(0, self.height-1)] += 5
+        initMap[random.randint(0, self.width-1), random.randint(0, self.height-1)] -= 5
+        return initMap
+
+
     def _computeObservation(self) :
         positionMap = np.zeros((1, self.width, self.height))
         if (self.isLoaded) :
@@ -58,22 +62,31 @@ class ConstructionSite(gym.Env) :
         obs = np.concatenate((_map, positionMap), axis=0)
         return obs
 
+
     def reset(self) :
         self.w = random.randint(0, self.width-1)
         self.h = random.randint(0, self.height-1)
         self.isLoaded = False
+
+        if (self.initMap is None) :
+            self.initMap = self._defineInitMap()
         self.map = np.copy(self.initMap)
         return self._computeObservation()
 
 
+    def _measureFlatness(self) :
+        sum = -np.sum(np.abs(self.map))
+        return float(sum)
+
+
     def _isMapFlat(self) :
-        sum = np.sum(np.abs(self.map))
+        sum = self._measureFlatness()
         return bool(sum == 0) # Cast <np._bool> to <bool>
 
 
     def step(self, action) :
 
-        previousHeight = self.map[self.w, self.h]
+        previousFlatness = self._measureFlatness()
         previousW = self.w
         previousH = self.h
 
@@ -101,11 +114,8 @@ class ConstructionSite(gym.Env) :
             raise ValueError(f"Recieved invalid action '{action}'.")
 
         obs = self._computeObservation()
-        reward = -0.01
-        if abs(previousHeight) > abs(self.map[previousW, previousH]) :
-            reward += 1
-        elif abs(previousHeight) < abs(self.map[previousW, previousH]) :
-            reward -= 1
+        currentFlatness = self._measureFlatness()
+        reward = -0.01 + currentFlatness - previousFlatness
         done = self._isMapFlat()
         info = {}
         return obs, reward, done, info
