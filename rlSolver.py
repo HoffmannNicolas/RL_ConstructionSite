@@ -5,19 +5,28 @@ import torch as th
 import torch.nn as nn
 
 from constructionSite import ConstructionSite
+from constructionSite_v2 import ConstructionSite_v2
 from stable_baselines3 import DQN, PPO, A2C, SAC
 from stable_baselines3.common.torch_layers import BaseFeaturesExtractor
 from stable_baselines3.common.evaluation import evaluate_policy
 
+from stable_baselines3.common.vec_env import SubprocVecEnv
+from stable_baselines3.common.vec_env import DummyVecEnv
 
 from gym.wrappers import TimeLimit
 
-agentPath = "_data/myModel.zip"
+agentPath = "_data/myModel9.zip"
 
 
-env = ConstructionSite(gridWidth=5, gridHeight=5, seed=0)
-env = TimeLimit(env, max_episode_steps=2000)
+def makeEnv() :
+    # env = ConstructionSite(gridWidth=5, gridHeight=5, seed=0)
+    env = ConstructionSite_v2(gridWidth=5, gridHeight=5, seed=0)
+    env = TimeLimit(env, max_episode_steps=2000)
+    return env
 
+# env_vec = SubprocVecEnv([lambda: ConstructionSite_v2(gridWidth=5, gridHeight=5, seed=0) for _ in range(6)])
+env = makeEnv()
+env_vec = DummyVecEnv([lambda: makeEnv() for _ in range(15)])
 
 class CustomCNN(BaseFeaturesExtractor):
     def __init__(self, observation_space: gym.spaces.Box, features_dim: int = 256):
@@ -26,16 +35,15 @@ class CustomCNN(BaseFeaturesExtractor):
         # Re-ordering will be done by pre-preprocessing or wrapper
         n_input_channels = observation_space.shape[0]
         self.cnn = nn.Sequential(
-            nn.Conv2d(n_input_channels, 4, kernel_size=3, stride=1, padding=1),
+            nn.Conv2d(n_input_channels, 8, kernel_size=3, stride=1, padding=1),
             nn.ReLU(),
-            nn.Conv2d(4, 8, kernel_size=3, stride=1, padding=1),
-            nn.ReLU(),
+            nn.BatchNorm2d(8),
             nn.Conv2d(8, 16, kernel_size=3, stride=1, padding=1),
             nn.ReLU(),
-            nn.Conv2d(16, 16, kernel_size=3, stride=1, padding=1),
+            nn.BatchNorm2d(16),
+            nn.Conv2d(16, 32, kernel_size=3, stride=1, padding=1),
             nn.ReLU(),
-            nn.Conv2d(16, 16, kernel_size=3, stride=1, padding=1),
-            nn.ReLU(),
+            nn.BatchNorm2d(32),
             nn.Flatten(),
         )
 
@@ -61,7 +69,8 @@ if os.path.isfile(agentPath) :
     model.set_env(env)
 else :
     print(f"Instanciate new agent and save in {agentPath}")
-    model = PPO("CnnPolicy", env, policy_kwargs=policy_kwargs, verbose=1)
+    # model = PPO("CnnPolicy", env, policy_kwargs=policy_kwargs, verbose=1)
+    model = PPO("CnnPolicy", env_vec, policy_kwargs=policy_kwargs, verbose=1)
     model.save(agentPath)
 
 # Record gif of trained agent
