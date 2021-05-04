@@ -11,12 +11,13 @@ class ConstructionSite(gym.Env) :
 
     """ Custom "Construction Site" environment that follows gym interface """
 
-    def __init__(self, gridWidth=10, gridHeight=10, highestAltitudeError=10, seed=random.random(), stochasticity=0, metaLearning=False) :
+    def __init__(self, gridWidth=10, gridHeight=10, highestAltitudeError=10, seed=random.random(), stochasticity=0, continuousActions=False, metaLearning=False) :
         # <gridWidth> is the width of the grid
         # <gridHeight> is the height of the grid
         # <highestAltitudeError> is the maximum error, useful for visualization. # TODO : Remove
         # <seed> is the random seed to be used.
         # <stochasticity> is the likelihood that an action is not performed as intended.
+        # <continuousActions> : Are the actions continuous ?
         # <metaLearning> : Is the environment re-generated every episode ?
         assert isinstance(gridWidth, int), f"<gridWidth> should be an int (got '{type(gridWidth)}' instead)."
         assert (gridWidth >= 1), f"<gridWidth> should be strickly positive (got '{gridWidth}')."
@@ -26,6 +27,7 @@ class ConstructionSite(gym.Env) :
         assert (highestAltitudeError >= 1), f"<highestAltitudeError> should be strickly positive (got '{highestAltitudeError}')."
         assert isinstance(seed, int), f"<seed> should be an int (got '{type(seed)}' instead)."
         assert (stochasticity >= 0 and stochasticity <= 1), f"<stochasticity> should be in [0, 1] (got '{stochasticity}')."
+        assert isinstance(continuousActions, bool), f"<continuousActions> should be a boolean (got '{type(continuousActions)}' instead)."
         assert isinstance(metaLearning, bool), f"<metaLearning> should be a boolean (got '{type(metaLearning)}' instead)."
 
         super(ConstructionSite, self).__init__()
@@ -52,7 +54,8 @@ class ConstructionSite(gym.Env) :
         self.GoRight = 3
         self.Pick = 4
         self.Drop = 5
-        self.n_actions = 6 # GoUp, GoLeft, GoRight, GoDown, Pick, Drop
+        self.actions = [self.GoUp, self.GoLeft, self.GoDown, self.GoRight, self.Pick, self.Drop]
+        self.n_actions = len(self.actions)
         self.action_space = gym.spaces.Discrete(self.n_actions)
         self.stochasticity = stochasticity
 
@@ -108,6 +111,10 @@ class ConstructionSite(gym.Env) :
         previousFlatness = self._measureFlatness()
         previousW = self.w
         previousH = self.h
+
+        if (self.stochasticity > 0) :
+            if (random.random() < self.stochasticity) :
+                action = random.choice(self.actions)
 
         if (action == self.GoUp) :
             if (self.h < self.height-1) :
