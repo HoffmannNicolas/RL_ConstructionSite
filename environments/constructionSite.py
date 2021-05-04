@@ -90,8 +90,9 @@ class ConstructionSite(gym.Env) :
         self.h = random.randint(0, self.height-1)
         self.isLoaded = False
 
-        if (self.initMap is None) :
+        if ((self.initMap is None) or self.metaLearning) :
             self.initMap = self._defineInitMap()
+
         self.map = np.copy(self.initMap)
         return self._computeObservation()
 
