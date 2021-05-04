@@ -3,5 +3,4 @@
 env/*
 _data/*
 __pycache__/*
-
-
+environments/__pycache__/*

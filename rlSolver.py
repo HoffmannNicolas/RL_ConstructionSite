@@ -4,8 +4,8 @@ import gym
 import torch as th
 import torch.nn as nn
 
-from constructionSite import ConstructionSite
-from constructionSite_v2 import ConstructionSite_v2
+from environments.constructionSite import ConstructionSite
+from environments.constructionSite_v2 import ConstructionSite_v2
 from stable_baselines3 import DQN, PPO, A2C, SAC
 from stable_baselines3.common.torch_layers import BaseFeaturesExtractor
 from stable_baselines3.common.evaluation import evaluate_policy
