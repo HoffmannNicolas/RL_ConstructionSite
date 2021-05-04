@@ -71,7 +71,8 @@ class ConstructionSite(gym.Env) :
         )
 
 
-    def _initPosition(self) :
+    def _defineInitPosition(self) :
+        """ Define a random initial state of the agent """
         w = random.randint(0, self.width-1)
         h = random.randint(0, self.height-1)
         isLoaded = False
@@ -79,6 +80,7 @@ class ConstructionSite(gym.Env) :
 
 
     def _defineInitMap(self) :
+        """ Define a random initial state of the environment """
         initMap = np.copy(self.map)
         initMap[random.randint(0, self.width-1), random.randint(0, self.height-1)] += 5
         initMap[random.randint(0, self.width-1), random.randint(0, self.height-1)] -= 5
@@ -86,6 +88,7 @@ class ConstructionSite(gym.Env) :
 
 
     def _computeObservation(self) :
+        """ Computes the observation to be fed to the agent """
         positionMap = np.zeros((1, self.width, self.height))
         if (self.isLoaded) :
             positionMap[0, self.w, self.h] = 1
@@ -97,41 +100,40 @@ class ConstructionSite(gym.Env) :
 
 
     def reset(self) :
-
+        """ Reset the environment, either before it is used the very first time, or when an episode is finished """
         if ((self.initPosition is None) or self.exploringStarts) :
-            self.initPosition = _defineInitPosition()
-
+            self.initPosition = self._defineInitPosition()
         self.w = self.initPosition[0]
         self.h = self.initPosition[1]
         self.isLoaded = self.initPosition[2]
-
         if ((self.initMap is None) or self.metaLearning) :
             self.initMap = self._defineInitMap()
-
         self.map = np.copy(self.initMap)
         return self._computeObservation()
 
 
     def _measureFlatness(self) :
+        """ Measure how far the environment is to be flat """
         sum = -np.sum(np.abs(self.map))
         return float(sum)
 
 
     def _isMapFlat(self) :
+        """ Episode terminaison condition """
         sum = self._measureFlatness()
         return bool(sum == 0) # Cast <np._bool> to <bool>
 
 
     def step(self, action) :
+        """ Compute the next state and reward from the current state and the agent's action """
+        assert (action is in self.actions), f"<action> should be one of the self.actions={str(self.action)}, but got '{action}' instead."
 
         previousFlatness = self._measureFlatness()
         previousW = self.w
         previousH = self.h
-
-        if (self.stochasticity > 0) :
+        if (self.stochasticity > 0) : # Handle stochasticity
             if (random.random() < self.stochasticity) :
                 action = random.choice(self.actions)
-
         if (action == self.GoUp) :
             if (self.h < self.height-1) :
                 self.h += 1
@@ -154,7 +156,6 @@ class ConstructionSite(gym.Env) :
                 self.map[self.w, self.h] += 1
         else :
             raise ValueError(f"Recieved invalid action '{action}'.")
-
         obs = self._computeObservation()
         currentFlatness = self._measureFlatness()
         reward = -0.01 + currentFlatness - previousFlatness
@@ -164,6 +165,7 @@ class ConstructionSite(gym.Env) :
 
 
     def render(self, mode='console'):
+        """ Visualize the environment, either on the terminal or on images """
         if mode == 'console':
             print("\n=== Env ===")
             for h in range(self.height) :
