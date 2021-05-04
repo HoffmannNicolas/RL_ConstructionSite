@@ -16,12 +16,8 @@ class ConstructionSite_v2(ConstructionSite) :
         super(ConstructionSite_v2, self).__init__(*args, **kwargs)
 
 
-    def reset(self, numPoints=100, numIterations=100) :
-        self.w = random.randint(0, self.width-1)
-        self.h = random.randint(0, self.height-1)
-        self.isLoaded = False
-
-        self.map = np.zeros((self.width, self.height))
+    def _defineInitMap(self, numPoints=100, numIterations=100) :
+        initMap = np.zeros((self.width, self.height))
 
         pickZoneCenter = np.random.rand(2) # [x, y] coordinates of the center
         dropZoneDefined = False
@@ -45,10 +41,10 @@ class ConstructionSite_v2(ConstructionSite) :
         for i in range(numIterations) :
             pickCellChoice = random.choice(pickCells)
             dropCellChoice = random.choice(dropCells)
-            if (abs(self.map[pickCellChoice[0], pickCellChoice[1]]) >= self.highestAltitudeError) :
+            if (abs(initMap[pickCellChoice[0], pickCellChoice[1]]) >= self.highestAltitudeError) :
                 continue
-            if (abs(self.map[dropCellChoice[0], dropCellChoice[1]]) >= self.highestAltitudeError) :
+            if (abs(initMap[dropCellChoice[0], dropCellChoice[1]]) >= self.highestAltitudeError) :
                 continue
-            self.map[pickCellChoice[0], pickCellChoice[1]] -= 1
-            self.map[dropCellChoice[0], dropCellChoice[1]] += 1
-        return self._computeObservation()
+            initMap[pickCellChoice[0], pickCellChoice[1]] -= 1
+            initMap[dropCellChoice[0], dropCellChoice[1]] += 1
+        return initMap
