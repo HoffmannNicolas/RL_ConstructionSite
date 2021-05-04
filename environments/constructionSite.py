@@ -126,7 +126,7 @@ class ConstructionSite(gym.Env) :
 
     def step(self, action) :
         """ Compute the next state and reward from the current state and the agent's action """
-        assert (action is in self.actions), f"<action> should be one of the self.actions={str(self.action)}, but got '{action}' instead."
+        assert (action in self.actions), f"<action> should be one of the self.actions={str(self.action)}, but got '{action}' instead."
 
         previousFlatness = self._measureFlatness()
         previousW = self.w
