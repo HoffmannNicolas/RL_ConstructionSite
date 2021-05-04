@@ -34,7 +34,7 @@ class ConstructionSite(gym.Env) :
 
         super(ConstructionSite, self).__init__()
 
-        random.seed(seed)
+        self.seed = seed
 
             # Properties of the construction site
         self.width = gridWidth
@@ -102,11 +102,15 @@ class ConstructionSite(gym.Env) :
     def reset(self) :
         """ Reset the environment, either before it is used the very first time, or when an episode is finished """
         if ((self.initPosition is None) or self.exploringStarts) :
+            random.seed(self.seed)
+            np.random.seed(seed=self.seed)
             self.initPosition = self._defineInitPosition()
         self.w = self.initPosition[0]
         self.h = self.initPosition[1]
         self.isLoaded = self.initPosition[2]
         if ((self.initMap is None) or self.metaLearning) :
+            random.seed(self.seed)
+            np.random.seed(seed=self.seed)
             self.initMap = self._defineInitMap()
         self.map = np.copy(self.initMap)
         return self._computeObservation()
