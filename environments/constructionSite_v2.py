@@ -12,8 +12,8 @@ class ConstructionSite_v2(ConstructionSite) :
 
     """ Variation of a ConstructionSite environment that creates more complex environments """
 
-    def __init__(self, gridWidth=10, gridHeight=10, highestAltitudeError=10, seed=random.random()) :
-        super(ConstructionSite_v2, self).__init__(gridWidth=gridWidth, gridHeight=gridHeight, highestAltitudeError=highestAltitudeError, seed=seed)
+    def __init__(self, *args, **kwargs) :
+        super(ConstructionSite_v2, self).__init__(*args, **kwargs)
 
 
     def reset(self, numPoints=100, numIterations=100) :
