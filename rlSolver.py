@@ -15,7 +15,7 @@ from stable_baselines3.common.vec_env import DummyVecEnv
 
 from gym.wrappers import TimeLimit
 
-agentPath = "_data/myModel9.zip"
+agentPath = "_data/myModel2.zip"
 
 
 def makeEnv() :
@@ -26,7 +26,7 @@ def makeEnv() :
 
 # env_vec = SubprocVecEnv([lambda: ConstructionSite_v2(gridWidth=5, gridHeight=5, seed=0) for _ in range(6)])
 env = makeEnv()
-env_vec = DummyVecEnv([lambda: makeEnv() for _ in range(15)])
+env_vec = DummyVecEnv([lambda: makeEnv() for _ in range(8)])
 
 class CustomCNN(BaseFeaturesExtractor):
     def __init__(self, observation_space: gym.spaces.Box, features_dim: int = 256):
@@ -35,15 +35,15 @@ class CustomCNN(BaseFeaturesExtractor):
         # Re-ordering will be done by pre-preprocessing or wrapper
         n_input_channels = observation_space.shape[0]
         self.cnn = nn.Sequential(
-            nn.Conv2d(n_input_channels, 8, kernel_size=3, stride=1, padding=1),
+            nn.Conv2d(n_input_channels, 4, kernel_size=3, stride=1, padding=1),
+            nn.ReLU(),
+            nn.BatchNorm2d(4),
+            nn.Conv2d(4, 8, kernel_size=3, stride=1, padding=1),
             nn.ReLU(),
             nn.BatchNorm2d(8),
             nn.Conv2d(8, 16, kernel_size=3, stride=1, padding=1),
             nn.ReLU(),
             nn.BatchNorm2d(16),
-            nn.Conv2d(16, 32, kernel_size=3, stride=1, padding=1),
-            nn.ReLU(),
-            nn.BatchNorm2d(32),
             nn.Flatten(),
         )
 
@@ -80,6 +80,7 @@ imagesGrid.append(env.render("human"))
 for step in range(200):
     action, _ = model.predict(obs, deterministic=False)
     obs, reward, done, info = env.step(action)
+    print("reward : ", reward)
     env.render(mode='console')
     imagesGrid.append(env.render("human"))
     if done:
