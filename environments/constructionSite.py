@@ -11,14 +11,15 @@ class ConstructionSite(gym.Env) :
 
     """ Custom "Construction Site" environment that follows gym interface """
 
-    def __init__(self, gridWidth=10, gridHeight=10, highestAltitudeError=10, seed=random.random(), stochasticity=0, continuousActions=False, metaLearning=False) :
+    def __init__(self, gridWidth=10, gridHeight=10, highestAltitudeError=10, seed=random.random(), stochasticity=0, exploringStarts=False, metaLearning=False, continuousActions=False) :
         # <gridWidth> is the width of the grid
         # <gridHeight> is the height of the grid
         # <highestAltitudeError> is the maximum error, useful for visualization. # TODO : Remove
         # <seed> is the random seed to be used.
         # <stochasticity> is the likelihood that an action is not performed as intended.
-        # <continuousActions> : Are the actions continuous ?
+        # <exploringStarts> : Is the first state random ?
         # <metaLearning> : Is the environment re-generated every episode ?
+        # <continuousActions> : Are the actions continuous ?
         assert isinstance(gridWidth, int), f"<gridWidth> should be an int (got '{type(gridWidth)}' instead)."
         assert (gridWidth >= 1), f"<gridWidth> should be strickly positive (got '{gridWidth}')."
         assert isinstance(gridHeight, int), f"<gridHeight> should be an int (got '{type(gridHeight)}' instead)."
@@ -27,8 +28,9 @@ class ConstructionSite(gym.Env) :
         assert (highestAltitudeError >= 1), f"<highestAltitudeError> should be strickly positive (got '{highestAltitudeError}')."
         assert isinstance(seed, int), f"<seed> should be an int (got '{type(seed)}' instead)."
         assert (stochasticity >= 0 and stochasticity <= 1), f"<stochasticity> should be in [0, 1] (got '{stochasticity}')."
-        assert isinstance(continuousActions, bool), f"<continuousActions> should be a boolean (got '{type(continuousActions)}' instead)."
+        assert isinstance(exploringStarts, bool), f"<exploringStarts> should be a boolean (got '{type(exploringStarts)}' instead)."
         assert isinstance(metaLearning, bool), f"<metaLearning> should be a boolean (got '{type(metaLearning)}' instead)."
+        assert isinstance(continuousActions, bool), f"<continuousActions> should be a boolean (got '{type(continuousActions)}' instead)."
 
         super(ConstructionSite, self).__init__()
 
@@ -39,6 +41,8 @@ class ConstructionSite(gym.Env) :
         self.height = gridHeight
         self.highestAltitudeError = highestAltitudeError
         self.map = np.zeros((self.width, self.height))
+        self.initPosition = None
+        self.exploringStarts = exploringStarts
         self.initMap = None
         self.metaLearning = metaLearning
 
@@ -67,6 +71,13 @@ class ConstructionSite(gym.Env) :
         )
 
 
+    def _initPosition(self) :
+        w = random.randint(0, self.width-1)
+        h = random.randint(0, self.height-1)
+        isLoaded = False
+        return [w, h, isLoaded]
+
+
     def _defineInitMap(self) :
         initMap = np.copy(self.map)
         initMap[random.randint(0, self.width-1), random.randint(0, self.height-1)] += 5
@@ -86,9 +97,13 @@ class ConstructionSite(gym.Env) :
 
 
     def reset(self) :
-        self.w = random.randint(0, self.width-1)
-        self.h = random.randint(0, self.height-1)
-        self.isLoaded = False
+
+        if ((self.initPosition is None) or self.exploringStarts) :
+            self.initPosition = _defineInitPosition()
+
+        self.w = self.initPosition[0]
+        self.h = self.initPosition[1]
+        self.isLoaded = self.initPosition[2]
 
         if ((self.initMap is None) or self.metaLearning) :
             self.initMap = self._defineInitMap()
