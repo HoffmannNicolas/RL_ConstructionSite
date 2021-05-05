@@ -1,6 +1,18 @@
-Toy problem of a construction site.
-Machines move in a discrete grid (representing the construction site). Each cell has an altitude, machines can pick matter from a cell (lowering its altitude) or dropping matter to a cell (increasing its altitude).
-The goal is to reach a leveled construction site as quickly as possible.
+Toy construction site problem :
+
+-> An agent moves on a discrete grid (the construction site) where each cell has an altitude ;
+
+-> The agent and pick or drop matter to lower or higher the altitude of its current cell;
+
+-> The goal is to level the site (all equal altitudes) as quickly as possible.
+
+
+Example of solution :
+
+![](_doc/simpleSolution.gif)
 
 
 
+![](_doc/RL_illustration.jpg)
+
+This repository uses StableBaselines3 for the agents and implements a custom environment to run in.
