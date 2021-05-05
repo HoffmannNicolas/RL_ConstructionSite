@@ -15,12 +15,13 @@ from stable_baselines3.common.vec_env import DummyVecEnv
 
 from gym.wrappers import TimeLimit
 
-agentPath = "_data/myModel2.zip"
+agentPath = "_data/myModel8.zip"
 
 
 def makeEnv() :
-    # env = ConstructionSite(gridWidth=5, gridHeight=5, seed=0)
-    env = ConstructionSite_v2(gridWidth=5, gridHeight=5, seed=0)
+    # env = ConstructionSite(gridWidth=5, gridHeight=5, seed=0, stochasticity=0, exploringStarts=True, metaLearning=False, continuousActions=False)
+    env = ConstructionSite_v2(gridWidth=5, gridHeight=5, seed=0, stochasticity=0, exploringStarts=True, metaLearning=False, continuousActions=False)
+    # env = ConstructionSite_v2(gridWidth=5, gridHeight=5, seed=0)
     env = TimeLimit(env, max_episode_steps=2000)
     return env
 
@@ -35,16 +36,18 @@ class CustomCNN(BaseFeaturesExtractor):
         # Re-ordering will be done by pre-preprocessing or wrapper
         n_input_channels = observation_space.shape[0]
         self.cnn = nn.Sequential(
-            nn.Conv2d(n_input_channels, 4, kernel_size=3, stride=1, padding=1),
-            nn.ReLU(),
-            nn.BatchNorm2d(4),
-            nn.Conv2d(4, 8, kernel_size=3, stride=1, padding=1),
+            nn.Conv2d(n_input_channels, 8, kernel_size=3, stride=1, padding=1),
             nn.ReLU(),
             nn.BatchNorm2d(8),
             nn.Conv2d(8, 16, kernel_size=3, stride=1, padding=1),
             nn.ReLU(),
             nn.BatchNorm2d(16),
             nn.Flatten(),
+            nn.Linear(400, 32, bias=True),
+            nn.ReLU(),
+            nn.Linear(32, 16, bias=True),
+            nn.ReLU(),
+            nn.Linear(16, 8, bias=True),
         )
 
         # Compute shape by doing one forward pass
@@ -65,12 +68,14 @@ policy_kwargs = dict(
 
 if os.path.isfile(agentPath) :
     print(f"Load agent from {agentPath}")
-    model = PPO.load(agentPath)
+    # model = PPO.load(agentPath)
+    model = DQN.load(agentPath)
     model.set_env(env)
 else :
     print(f"Instanciate new agent and save in {agentPath}")
-    # model = PPO("CnnPolicy", env, policy_kwargs=policy_kwargs, verbose=1)
-    model = PPO("CnnPolicy", env_vec, policy_kwargs=policy_kwargs, verbose=1)
+    # model = PPO("CnnPolicy", env_vec, policy_kwargs=policy_kwargs, verbose=1)
+    # model = DQN("CnnPolicy", env_vec, policy_kwargs=policy_kwargs, verbose=1)
+    model = DQN("CnnPolicy", env, target_update_interval=1000, batch_size=512, exploration_final_eps=0.2, policy_kwargs=policy_kwargs, verbose=1)
     model.save(agentPath)
 
 # Record gif of trained agent
