@@ -221,6 +221,15 @@ class ConstructionSite(gym.Env) :
             bottomCoord = topCoord + cellHeight - 1
             imageDraw.ellipse((leftCoord+agentMargin, topCoord+agentMargin, rightCoord-agentMargin, bottomCoord-agentMargin), fill=agentColor)
 
+                # Draw cargo if any
+            if self.isLoaded :
+                margin = 0.15
+                leftCoord = (self.w + margin) * cellWidth
+                rightCoord = (self.w + 1 - margin) * cellWidth - 1
+                topCoord = (self.h + margin) * cellHeight
+                bottomCoord = (self.h + 1 -margin) * cellHeight - 1
+                imageDraw.ellipse((leftCoord+agentMargin, topCoord+agentMargin, rightCoord-agentMargin, bottomCoord-agentMargin), fill=leveledCellColor)
+
             image.save("_data/image.png")
             return image
 
