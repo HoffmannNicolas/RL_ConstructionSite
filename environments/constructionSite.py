@@ -44,6 +44,7 @@ class ConstructionSite(gym.Env) :
         self.initPosition = None
         self.exploringStarts = exploringStarts
         self.initMap = None
+        self.targetMap = None
         self.metaLearning = metaLearning
 
             # Properties of the operating machine
@@ -86,6 +87,20 @@ class ConstructionSite(gym.Env) :
         initMap[random.randint(0, self.width-1), random.randint(0, self.height-1)] -= 5
         return initMap
 
+    def _defineTargetMap(self, targetAmplitude=6) :
+        """ Define a random target map """
+        initMap = np.copy(self.map)
+        if (self.width <= 3 or self.height <= 3) : # Ensure the map is sufficiently big for interesting structures
+            initMap[random.randint(0, self.width-1), random.randint(0, self.height-1)] += 2
+            initMap[random.randint(0, self.width-1), random.randint(0, self.height-1)] -= 2
+            return initMap
+
+        for roadTileIndex in range(self.width) :
+            initMap[roadTileIndex, 1] += targetAmplitude
+            initMap[self.width - 1 - math.floor(roadTileIndex / 2), self.height - 1 - roadTileIndex % 2] -= targetAmplitude
+
+        print(initMap)
+        return initMap
 
     def _computeObservation(self) :
         """ Computes the observation to be fed to the agent """
@@ -95,6 +110,7 @@ class ConstructionSite(gym.Env) :
         else :
             positionMap[0, self.w, self.h] = -1
         _map = np.expand_dims(self.map, axis=0)
+        _map = np.expand_dims(self.map - self.targetMap, axis=0)
         obs = np.concatenate((_map, positionMap), axis=0)
         return obs
 
@@ -112,27 +128,31 @@ class ConstructionSite(gym.Env) :
             random.seed(self.seed)
             np.random.seed(seed=self.seed)
             self.initMap = self._defineInitMap()
+        if ((self.targetMap is None) or self.metaLearning) :
+            random.seed(self.seed)
+            np.random.seed(seed=self.seed)
+            self.targetMap = self._defineTargetMap()
         self.map = np.copy(self.initMap)
         return self._computeObservation()
 
 
-    def _measureFlatness(self) :
-        """ Measure how far the environment is to be flat """
-        sum = -np.sum(np.abs(self.map))
+    def _measureError(self) :
+        """ Measure how far the environment is to the target """
+        sum = -np.sum(np.abs(self.map - self.targetMap))
         return float(sum)
 
 
-    def _isMapFlat(self) :
+    def _isTargetReached(self) :
         """ Episode terminaison condition """
-        sum = self._measureFlatness()
-        return bool(sum == 0) # Cast <np._bool> to <bool>
+        error = self._measureError()
+        return bool(error == 0) # Cast <np._bool> to <bool>
 
 
     def step(self, action) :
         """ Compute the next state and reward from the current state and the agent's action """
         assert (action in self.actions), f"<action> should be one of the self.actions={str(self.action)}, but got '{action}' instead."
 
-        previousFlatness = self._measureFlatness()
+        previousError = self._measureError()
         previousW = self.w
         previousH = self.h
         if (self.stochasticity > 0) : # Handle stochasticity
@@ -161,14 +181,14 @@ class ConstructionSite(gym.Env) :
         else :
             raise ValueError(f"Recieved invalid action '{action}'.")
         obs = self._computeObservation()
-        currentFlatness = self._measureFlatness()
-        reward = -0.01 + currentFlatness - previousFlatness
-        done = self._isMapFlat()
+        currentError = self._measureError()
+        reward = -0.01 + currentError - previousError
+        done = self._isTargetReached()
         info = {}
         return obs, reward, done, info
 
 
-    def render(self, mode='console'):
+    def render(self, mode='console', toShow='altitude'):
         """ Visualize the environment, either on the terminal or on images """
         if mode == 'console':
             print("\n=== Env ===")
@@ -178,7 +198,12 @@ class ConstructionSite(gym.Env) :
                     if (self.w == w) and (self.h == h) :
                         print(f"X\t", end='')
                     else :
-                        print(f"{int(self.map[w, h])}\t", end='')
+                        if toShow == 'altitude' :
+                            print(f"{int(self.map[w, h])}\t", end='')
+                        elif toShow == 'error' :
+                            print(f"{int(self.targetMap[w, h] - self.map[w, h])}\t", end='')
+                        else :
+                            print("Warning :: toShow cannot be parsed (needs to be 'altitude' or 'error')")
                 print()
             print()
 
@@ -200,7 +225,13 @@ class ConstructionSite(gym.Env) :
                     cellTopCoord = cellCoordY * cellHeight
                     cellBottomCoord = cellTopCoord + cellWidth - 1
                     cellAltitude = self.map[cellCoordX, cellCoordY]
-                    cellAltitudeError = abs(cellAltitude)
+                    if toShow == 'altitude' :
+                        cellAltitudeError = abs(cellAltitude)
+                    elif toShow == 'error' :
+                        targetAltitude = self.targetMap[cellCoordX, cellCoordY]
+                        cellAltitudeError = abs(targetAltitude - cellAltitude)
+                    else :
+                        print("Warning :: toShow cannot be parsed (needs to be 'altitude' or 'error')")
                     if (cellAltitude < 0) : cellColor = tuple([int(val) for val in (1 - cellAltitudeError / self.highestAltitudeError) * np.array(leveledCellColor)])
                     elif (cellAltitude > 0) : cellColor = tuple([int(val) for val in (1 + cellAltitudeError / self.highestAltitudeError) * np.array(leveledCellColor)])
                     else : cellColor = leveledCellColor
